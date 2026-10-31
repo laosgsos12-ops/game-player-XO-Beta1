@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XO play game 1.0Beta</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Prompt', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        glass: {
+                            light: 'rgba(255, 255, 255, 0.25)',
+                            dark: 'rgba(18, 18, 28, 0.65)',
+                            border: 'rgba(255, 255, 255, 0.2)',
+                            accent: '#6366f1',
+                            accent2: '#ec4899',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-short': 'bounce 0.6s ease-in-out 1',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Dynamic Glassmorphism Variables & Mobile Frame CSS -->
+    <style>
+        :root {
+            --glass-alpha: 0.35;
+            --glass-blur: 16px;
+            --glass-radius: 24px;
+            --glass-border-alpha: 0.25;
+            --glass-shadow-y: 12px;
+            --glass-sat: 140%;
+            --glass-bright: 105%;
+            --anim-speed-factor: 1;
+            --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        body {
+            font-family: 'Prompt', 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow-x: hidden;
+            background: #0b0f19;
+            color: #f3f4f6;
+        }
+
+        /* Real-time Dynamic Liquid Glass Utility Class */
+        .liquid-glass {
+            background: rgba(255, 255, 255, var(--glass-alpha));
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-bright));
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-bright));
+            border: 1px solid rgba(255, 255, 255, var(--glass-border-alpha));
+            border-radius: var(--glass-radius);
+            box-shadow: 0 var(--glass-shadow-y) 32px 0 rgba(0, 0, 0, 0.37),
+                        inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+                        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s var(--spring-bounce), background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .dark .liquid-glass {
+            background: rgba(15, 23, 42, calc(var(--glass-alpha) * 1.3));
+            border-color: rgba(255, 255, 255, calc(var(--glass-border-alpha) * 0.75));
+        }
+
+        /* 3D Depth Button Press Effect */
+        .glass-btn {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s var(--spring-bounce);
+            overflow: hidden;
+        }
+
+        .glass-btn:active {
+            transform: scale(0.94) translateY(2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transform: skewX(-20deg);
+            transition: left 0.6s ease;
+        }
+
+        .glass-btn:hover::after {
+            left: 150%;
+        }
+
+        /* Mobile Shell Frame setup for Desktop Preview */
+        @media (min-width: 640px) {
+            .app-shell-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                padding: 1.5rem;
+                background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 60%, #030712 100%);
+            }
+
+            .mobile-frame {
+                width: 385px;
+                height: 810px;
+                border-radius: 44px;
+                border: 10px solid #1f293d;
+                box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8),
+                            0 0 30px 2px rgba(99, 102, 241, 0.3);
+                position: relative;
+                overflow: hidden;
+                background: #090d16;
+            }
+
+            .mobile-notch {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 140px;
+                height: 26px;
+                background: #1f293d;
+                border-bottom-left-radius: 16px;
+                border-bottom-right-radius: 16px;
+                z-index: 50;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .mobile-notch::before {
+                content: '';
+                width: 40px;
+                height: 4px;
+                background: #374151;
+                border-radius: 4px;
+            }
+
+            .mobile-notch::after {
+                content: '';
+                width: 8px;
+                height: 8px;
+                background: #10b981;
+                border-radius: 50%;
+            }
+        }
+
+        @media (max-width: 639px) {
+            .mobile-frame {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+            .mobile-notch {
+                display: none;
+            }
+        }
+
+        /* Hide scrollbars for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animated Glowing Grid Cells */
+        .xo-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.75rem;
+            border-radius: calc(var(--glass-radius) * 0.75);
+            transition: all 0.25s var(--spring-bounce);
+        }
+
+        .xo-cell:active {
+            transform: scale(0.88);
+        }
+
+        .xo-pop {
+            animation: xoPop 0.4s var(--spring-bounce) forwards;
+        }
+
+        @keyframes xoPop {
+            0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+            70% { transform: scale(1.25) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        [dir="rtl"] {
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- App Shell Wrapper (Handles Responsive Desktop Mobile Mockup Frame) -->
+    <div class="app-shell-container min-h-screen">
+        <div class="mobile-frame relative flex flex-col justify-between overflow-hidden">
+
+            <!-- Mobile Phone Speaker Notch (Desktop View) -->
+            <div class="mobile-notch"></div>
+
+            <!-- Dynamic Background Canvas (Aurora Waves & Floating Particles) -->
+            <canvas id="bgCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+            <!-- Confetti Canvas Overlay for Victory Celebrations -->
+            <canvas id="confettiCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-40"></canvas>
+
+            <!-- Top Header & User Navigation Bar -->
+            <header class="relative z-20 px-4 pt-8 pb-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <!-- User Profile Quick Avatar Button -->
+                    <button id="navProfileBtn" onclick="app.navigateTo('profile')" class="liquid-glass glass-btn p-1.5 flex items-center gap-2 pr-3 rounded-full">
+                        <div id="userAvatarHeader" class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-sm font-bold shadow overflow-hidden">
+                            <span>👤</span>
+                        </div>
+                        <div class="flex flex-col text-left leading-tight">
+                            <span id="navUserName" class="text-xs font-semibold truncate max-w-[85px]">Guest</span>
+                            <span id="cloudSyncStatus" class="text-[9px] text-indigo-300 flex items-center gap-1">
+                                <span id="syncDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span id="syncText">☁ Synced</span>
+                            </span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- App Official Branding Title -->
+                <div class="text-center">
+                    <h1 class="text-sm font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300">
+                        XO PLAY
+                    </h1>
+                    <span class="text-[9px] tracking-widest text-indigo-400 font-mono block -mt-1">1.0Beta</span>
+                </div>
+
+                <!-- Top Right Action Controls (Language & Firebase Config) -->
+                <div class="flex items-center gap-1.5">
+                    <button onclick="app.openModal('langModal')" class="liquid-glass glass-btn w-9 h-9 flex items-center justify-center rounded-full text-sm" title="Change Language">
+                        <span id="currentLangFlag">🇹🇭</span>
+                    </button>
+                    <button onclick="app.openModal('firebaseModal')" class="liquid-glass glass-btn w-9 h-9 flex items-center justify-center rounded-full text-amber-300 text-sm" title="Firebase Setup">
+                        <i class="fa-solid fa-fire"></i>
+                    </button>
+                    <button onclick="app.openModal('settingsModal')" class="liquid-glass glass-btn w-9 h-9 flex items-center justify-center rounded-full text-indigo-300 text-sm" title="Settings">
+                        <i class="fa-solid fa-sliders"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- MAIN VIEW CONTAINER (Renders Screen Pages dynamically) -->
+            <main id="mainView" class="relative z-10 flex-1 px-4 py-2 overflow-y-auto no-scrollbar flex flex-col">
+                <!-- Dynamic Content injected via JS -->
+            </main>
+
+            <!-- Bottom Navigation Bar (App Bar) -->
+            <nav class="relative z-20 px-4 py-3 border-t border-white/10 bg-slate-950/40 backdrop-blur-md flex justify-around items-center text-xs">
+                <button onclick="app.navigateTo('home')" class="nav-item flex flex-col items-center gap-1 text-indigo-400 font-medium" data-page="home">
+                    <i class="fa-solid fa-house text-lg"></i>
+                    <span data-i18n="navHome">หน้าหลัก</span>
+                </button>
+                <button onclick="app.navigateTo('modes')" class="nav-item flex flex-col items-center gap-1 text-gray-400 font-medium" data-page="modes">
+                    <i class="fa-solid fa-gamepad text-lg"></i>
+                    <span data-i18n="navPlay">เล่นเกม</span>
+                </button>
+                <button onclick="app.navigateTo('emoji')" class="nav-item flex flex-col items-center gap-1 text-gray-400 font-medium" data-page="emoji">
+                    <i class="fa-solid fa-face-smile text-lg"></i>
+                    <span data-i18n="navEmoji">Emoji/รูป</span>
+                </button>
+                <button onclick="app.navigateTo('stats')" class="nav-item flex flex-col items-center gap-1 text-gray-400 font-medium" data-page="stats">
+                    <i class="fa-solid fa-chart-column text-lg"></i>
+                    <span data-i18n="navStats">สถิติ</span>
+                </button>
+                <button onclick="app.navigateTo('profile')" class="nav-item flex flex-col items-center gap-1 text-gray-400 font-medium" data-page="profile">
+                    <i class="fa-solid fa-user text-lg"></i>
+                    <span data-i18n="navProfile">โปรไฟล์</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAYS CONTAINER -->
+    <div id="modalOverlay" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+        <!-- Injected Dynamic Modal Content -->
+        <div id="modalContent" class="liquid-glass w-full max-w-sm max-h-[85vh] overflow-y-auto p-5 relative transform scale-90 transition-all duration-300 no-scrollbar">
+        </div>
+    </div>
+
+    <!-- Notification Toast Float -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 liquid-glass px-4 py-2.5 rounded-full text-xs font-semibold flex items-center gap-2 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+        <i id="toastIcon" class="fa-solid fa-circle-info text-indigo-400"></i>
+        <span id="toastMsg">ข้อความ</span>
+    </div>
+
+    <!-- FIREBASE CDNs (v10 Modular Standard) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            signInWithRedirect,
+            GoogleAuthProvider, 
+            signOut, 
+            onAuthStateChanged,
+            signInAnonymously,
+            signInWithCustomToken
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            updateDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Expose Firebase modules to global window context
+        window.FB = {
+            initializeApp, getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider,
+            signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken,
+            getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot
+        };
+    </script>
+
+    <!-- CORE APPLICATION SCRIPT ENGINE -->
+    <script>
+        /**
+         * XO play game 1.0Beta Core Engine
+         * Dynamic Real Google Login, Cloud Firestore Sync, Liquid Glass Customization
+         */
+
+        // 1. DICTIONARY TRANSLATIONS (11 LANGUAGES SUPPORTED)
+        const i18n = {
+            th: {
+                appName: "XO play game",
+                appVersion: "1.0Beta",
+                navHome: "หน้าหลัก", navPlay: "เล่นเกม", navEmoji: "Emoji/รูป", navStats: "สถิติ", navProfile: "โปรไฟล์",
+                quickPlay: "เล่นเกมทันที", selectMode: "เลือกโหมดการเล่น",
+                mode2P: "2 คน (Pass & Play)", mode2PDesc: "เล่นกับเพื่อนในเครื่องเดียวกัน",
+                modeAI: "สู้กับ AI", modeAIDesc: "ท้าทายระบบปัญญาประดิษฐ์",
+                modeAIAI: "AI vs AI (ดูอัตโนมัติ)", modeAIAIDesc: "รับชม AI สู้กันเองอย่างสมบูรณ์แบบ",
+                aiEasy: "ระดับง่าย (Easy)", aiMed: "ระดับปานกลาง (Medium)", aiHard: "ระดับเซียน (Minimax Hard)",
+                aiEasyDesc: "AI สุ่มตำแหน่งแบบผ่อนคลาย", aiMedDesc: "AI เริ่มมีการป้องกันและฉวยโอกาส", aiHardDesc: "AI อัลกอริทึมสมบูรณ์แบบ ป้องกันการแพ้ได้จริง!",
+                turnPlayer: "ตาของ", winMsg: "ชนะแล้ว!", drawMsg: "เสมอกัน!", playAgain: "เล่นอีกครั้ง", backHome: "กลับหน้าแรก",
+                settingsTitle: "ตั้งค่าระบบ & Liquid Glass", transparency: "ความโปร่งใส (Glass Alpha)", blur: "ความเบลอ (Blur)",
+                radius: "ความมน (Corner Radius)", depth: "ความลึก (3D Depth)", themeTitle: "ธีมการแสดงผล",
+                darkTheme: "มืด", lightTheme: "สว่าง", systemTheme: "ตามระบบ",
+                soundFX: "เสียงเอฟเฟกต์ (FX)", bgMusic: "ดนตรีพื้นหลัง (BGM)", animSpeed: "ความเร็ว Animation",
+                googleLogin: "เข้าสู่ระบบด้วย Google", logout: "ออกจากระบบ", userProfile: "ข้อมูลโปรไฟล์",
+                totalGames: "เล่นทั้งหมด", wins: "ชนะ", losses: "แพ้", draws: "เสมอ", winRate: "อัตราชนะ", streak: "ชนะต่อเนื่อง",
+                customEmojiTitle: "จัดการ Emoji & รูปภาพประจำตัว", selectEmojiP1: "Emoji ผู้เล่น 1 (X)", selectEmojiP2: "Emoji ผู้เล่น 2 (O)",
+                uploadCustomImg: "อัปโหลดรูปภาพ custom", searchEmoji: "ค้นหา emoji...",
+                firebaseConfigTitle: "ตั้งค่า Firebase & Google Auth", configNotice: "กรอก Firebase Credentials เพื่อล็อกอิน Google และเซฟข้อมูล Cloud Firestore จริง",
+                synced: "☁ ซิงค์แล้ว", syncing: "☁ กำลังซิงค์...", offline: "⚠ ออฟไลน์"
+            },
+            en: {
+                appName: "XO play game", appVersion: "1.0Beta",
+                navHome: "Home", navPlay: "Play", navEmoji: "Emoji/Pic", navStats: "Stats", navProfile: "Profile",
+                quickPlay: "Quick Start", selectMode: "Select Game Mode",
+                mode2P: "2 Players (Pass & Play)", mode2PDesc: "Play with a friend on same device",
+                modeAI: "VS AI Engine", modeAIDesc: "Challenge smart Artificial Intelligence",
+                modeAIAI: "AI VS AI Auto Watch", modeAIAIDesc: "Sit back & watch AI battle continuously",
+                aiEasy: "Easy Level", aiMed: "Medium Level", aiHard: "Unbeatable Hard (Minimax)",
+                aiEasyDesc: "Random casual moves", aiMedDesc: "Basic blocking & opportunistic tactics", aiHardDesc: "Flawless minimax logic - Unbeatable!",
+                turnPlayer: "Turn:", winMsg: "VICTORY!", drawMsg: "DRAW GAME!", playAgain: "Play Again", backHome: "Main Menu",
+                settingsTitle: "Settings & Liquid Glass", transparency: "Glass Alpha", blur: "Backdrop Blur",
+                radius: "Corner Radius", depth: "3D Depth Tilt", themeTitle: "Theme Mode",
+                darkTheme: "Dark", lightTheme: "Light", systemTheme: "System",
+                soundFX: "Sound Effects (FX)", bgMusic: "Background Music (BGM)", animSpeed: "Animation Speed",
+                googleLogin: "Sign in with Google", logout: "Sign Out", userProfile: "User Profile",
+                totalGames: "Total Games", wins: "Wins", losses: "Losses", draws: "Draws", winRate: "Win Rate", streak: "Current Streak",
+                customEmojiTitle: "Emoji & Custom Avatar Studio", selectEmojiP1: "Player 1 Mark", selectEmojiP2: "Player 2 Mark",
+                uploadCustomImg: "Upload Custom Image", searchEmoji: "Search emojis...",
+                firebaseConfigTitle: "Firebase & Google Auth Setup", configNotice: "Enter your custom Firebase keys for real Google Login & Cloud database persistence",
+                synced: "☁ Synced", syncing: "☁ Syncing...", offline: "⚠ Offline"
+            },
+            la: { appName: "XO play game", appVersion: "1.0Beta", navHome: "ໜ້າຫຼັກ", navPlay: "ຫຼິ້ນເກມ", navEmoji: "ອີໂມຈິ", navStats: "ສະຖິຕິ", navProfile: "ໂປຣໄຟລ໌", quickPlay: "ຫຼິ້ນທັນທີ", selectMode: "ເລືອກໂໝດ", mode2P: "2 ຄົນ", modeAI: "ສູ້ກັບ AI", modeAIAI: "AI vs AI", aiEasy: "ງ່າຍ", aiMed: "ປານກາງ", aiHard: "ຍາກຫຼາຍ", turnPlayer: "ຕາຂອງ:", winMsg: "ຊະນະແລ້ວ!", drawMsg: "ສະເໝີກັນ!", playAgain: "ຫຼິ້ນອີກຄັ້ງ", backHome: "ກັບໜ້າຫຼັກ", settingsTitle: "ຕັ້ງຄ່າ", darkTheme: "ມືດ", lightTheme: "ແຈ້ງ", synced: "☁ ຊິງຄ໌ແລ້ວ", syncing: "☁ ກຳລັງຊິງຄ໌...", offline: "⚠ ອັອບໄລນ໌" },
+            vi: { appName: "XO play game", appVersion: "1.0Beta", navHome: "Trang chủ", navPlay: "Chơi ngay", navEmoji: "Biểu tượng", navStats: "Thống kê", navProfile: "Hồ sơ", quickPlay: "Bắt đầu nhanh", selectMode: "Chọn chế độ", mode2P: "2 Người chơi", modeAI: "Đấu với AI", modeAIAI: "AI đấu AI", aiEasy: "Dễ", aiMed: "Trung bình", aiHard: "Khó (Minimax)", turnPlayer: "Lượt:", winMsg: "CHIẾN THẮNG!", drawMsg: "HÒA!", playAgain: "Chơi lại", backHome: "Trang chủ", settingsTitle: "Cài đặt", darkTheme: "Tối", lightTheme: "Sáng", synced: "☁ Đã đồng bộ", syncing: "☁ Đang đồng bộ...", offline: "⚠ Ngoại tuyến" },
+            zh: { appName: "XO play game", appVersion: "1.0Beta", navHome: "首页", navPlay: "开始游戏", navEmoji: "表情/图片", navStats: "战绩", navProfile: "个人中心", quickPlay: "快速开始", selectMode: "选择模式", mode2P: "双人对战", modeAI: "人机对战", modeAIAI: "AI 观战模式", aiEasy: "简单", aiMed: "中等", aiHard: "极难 (Minimax)", turnPlayer: "轮到:", winMsg: "获胜！", drawMsg: "平局！", playAgain: "再来一局", backHome: "返回主页", settingsTitle: "设置", darkTheme: "深色", lightTheme: "浅色", synced: "☁ 已同步", syncing: "☁ 同步中...", offline: "⚠ 离线" },
+            ko: { appName: "XO play game", appVersion: "1.0Beta", navHome: "홈", navPlay: "플레이", navEmoji: "이모지", navStats: "통계", navProfile: "프로필", quickPlay: "빠른 시작", selectMode: "모드 선택", mode2P: "2인 플레이", modeAI: "AI 대전", modeAIAI: "AI 관전", aiEasy: "쉬움", aiMed: "보통", aiHard: "최고 난이도", turnPlayer: "차례:", winMsg: "승리!", drawMsg: "무승부!", playAgain: "다시 하기", backHome: "메인으로", settingsTitle: "설정", darkTheme: "다크", lightTheme: "라이트", synced: "☁ 동기화됨", syncing: "☁ 동기화 중...", offline: "⚠ 오프라인" },
+            km: { appName: "XO play game", appVersion: "1.0Beta", navHome: "ទំព័រដើម", navPlay: "លេង", navEmoji: "រូបអារម្មណ៍", navStats: "ស្ថិតិ", navProfile: "ប្រូហ្វែល", quickPlay: "លេងរហ័ស", selectMode: "ជ្រើសរើសម៉ូដ", mode2P: "២ នាក់", modeAI: "ប្រកួតជាមួយ AI", modeAIAI: "AI vs AI", aiEasy: "ងាយស្រួល", aiMed: "មធ្យម", aiHard: "ពិបាកខ្លាំង", turnPlayer: "វេន:", winMsg: "ឈ្នះហើយ!", drawMsg: "ស្មើគ្នា!", playAgain: "លេងម្តងទៀត", backHome: "ទំព័រដើម", settingsTitle: "ការកំណត់", darkTheme: "ងងឹត", lightTheme: "ភ្លឺ", synced: "☁ បានសមកាលកម្ម", syncing: "☁ កំពុងសមកាលកម្ម...", offline: "⚠ អស់អ៊ីនធឺណិត" },
+            id: { appName: "XO play game", appVersion: "1.0Beta", navHome: "Beranda", navPlay: "Main", navEmoji: "Emoji", navStats: "Statistik", navProfile: "Profil", quickPlay: "Mulai Cepat", selectMode: "Pilih Mode", mode2P: "2 Pemain", modeAI: "Lawan AI", modeAIAI: "AI vs AI", aiEasy: "Mudah", aiMed: "Sedang", aiHard: "Sangat Sulit", turnPlayer: "Giliran:", winMsg: "MENANG!", drawMsg: "SERI!", playAgain: "Main Lagi", backHome: "Menu Utama", settingsTitle: "Pengaturan", darkTheme: "Gelap", lightTheme: "Terang", synced: "☁ Tersinkron", syncing: "☁ Menyinkronkan...", offline: "⚠ Luring" },
+            hi: { appName: "XO play game", appVersion: "1.0Beta", navHome: "होम", navPlay: "खेलें", navEmoji: "इमोजी", navStats: "आंकड़े", navProfile: "प्रोफ़ाइल", quickPlay: "त्वरित खेल", selectMode: "मोड चुनें", mode2P: "2 खिलाड़ी", modeAI: "AI से खेलें", modeAIAI: "AI बनाम AI", aiEasy: "आसान", aiMed: "मध्यम", aiHard: "कठिन (Minimax)", turnPlayer: "बारी:", winMsg: "जीत!", drawMsg: "ड्रॉ!", playAgain: "फिर से खेलें", backHome: "मुख्य मेनू", settingsTitle: "सेटिंग्स", darkTheme: "डार्क", lightTheme: "लाइट", synced: "☁ सिंक हुआ", syncing: "☁ सिंक हो रहा है...", offline: "⚠ ऑफ़लाइन" },
+            ar: { appName: "XO play game", appVersion: "1.0Beta", navHome: "الرئيسية", navPlay: "لعب", navEmoji: "إيموجي", navStats: "الإحصائيات", navProfile: "الملف الشخصي", quickPlay: "بدء سريع", selectMode: "اختر الوضع", mode2P: "لاعبان", modeAI: "ضد الذكاء الاصطناعي", modeAIAI: "ذكاء ضد ذكاء", aiEasy: "سهل", aiMed: "متوسط", aiHard: "مستحيل (Minimax)", turnPlayer: "دور:", winMsg: "فوز!", drawMsg: "تعادل!", playAgain: "لعب مرة أخرى", backHome: "القائمة الرئيسية", settingsTitle: "الإعدادات", darkTheme: "داكن", lightTheme: "فاتح", synced: "☁ تم المزامنة", syncing: "☁ جاري المزامنة...", offline: "⚠ غير متصل" },
+            hmn: { appName: "XO play game", appVersion: "1.0Beta", navHome: "Hmoob Home", navPlay: "Ua Si", navEmoji: "Emoji", navStats: "Stats", navProfile: "Profile", quickPlay: "Ua Si Tamsis", selectMode: "Xaiv Mode", mode2P: "2 Tuag", modeAI: "Nrog AI", modeAIAI: "AI vs AI", aiEasy: "Yooj Yim", aiMed: "Nruab Nrab", aiHard: "Yaj Ceeb (Hard)", turnPlayer: "Tus:", winMsg: "NEEG THIAB!", drawMsg: "SIB TSO!", playAgain: "Ua Si Ntxiv", backHome: "Mus Tom Kev", settingsTitle: "Teev Cov Tuam", darkTheme: "Dua", lightTheme: "Paj", synced: "☁ Synced", syncing: "☁ Syncing...", offline: "⚠ Offline" }
+        };
+
+        // 2. POLYPHONIC WEB AUDIO SYNTHESIZER ENGINE
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.fxVolume = 0.7;
+                this.bgmVolume = 0.3;
+                this.isMusicPlaying = false;
+                this.bgmInterval = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTone(freq, type, duration, vol = 1) {
+                if (!this.ctx || this.fxVolume <= 0) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol * this.fxVolume, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) { console.error(e); }
+            }
+
+            playClick() { this.init(); this.playTone(600, 'sine', 0.08, 0.4); }
+            playMove(player = 1) { this.init(); const pitch = player === 1 ? 440 : 554.37; this.playTone(pitch, 'triangle', 0.15, 0.6); }
+            playWin() {
+                this.init();
+                [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+                    setTimeout(() => this.playTone(freq, 'sine', 0.3, 0.7), idx * 100);
+                });
+            }
+            playLose() {
+                this.init();
+                [400, 350, 300, 250].forEach((freq, idx) => {
+                    setTimeout(() => this.playTone(freq, 'sawtooth', 0.25, 0.5), idx * 110);
+                });
+            }
+            playDraw() {
+                this.init();
+                this.playTone(330, 'sine', 0.2, 0.5);
+                setTimeout(() => this.playTone(330, 'sine', 0.3, 0.5), 150);
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        // 3. EMOJI & CATEGORIZED DATABASE
+        const EMOJI_DATABASE = {
+            smileys: ["😂", "🤣", "😍", "🥰", "🤩", "🤭", "😎", "😈", "👻", "👽", "🤖", "🤡", "🥳", "🤠"],
+            hearts: ["❤️", "💙", "💚", "💛", "💜", "🩷", "🖤", "🤍", "💖", "💘", "🔥", "✨"],
+            animals: ["🐱", "🐶", "🦊", "🐼", "🐨", "🐸", "🐵", "🦁", "🐯", "🐷", "🐙", "🦄", "🐲", "🐉"],
+            food: ["🍕", "🍔", "🍰", "🍩", "🍓", "🍉", "🍎", "🍦", "🍿", "🍣", "🥑", "🧋"],
+            sports: ["⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🥊", "🎯", " bowling ", "🏆"],
+            gaming: ["🎮", "🕹️", "🎲", "👾", "♟️", "⚔️", "🛡️", "💎", "👑", "🚀"],
+            nature: ["🌸", "🌈", "⭐", "☀️", "🌙", "⚡", "🍀", "🌺", "🌊", "🪐"],
+            vehicles: ["🚗", "🏎️", "🚀", "🛸", "🚁", "⛵", "🚲", "🛵"]
+        };
+
+        const PRESET_EMOJI_SETS = [
+            { name: "Classic Hilarious", p1: "😂", p2: "🤣" },
+            { name: "Cute Pets", p1: "🐱", p2: "🐶" },
+            { name: "Space Blast", p1: "🚀", p2: "🔥" },
+            { name: "Retro Gaming", p1: "👾", p2: "🤖" },
+            { name: "Food Lovers", p1: "🍕", p2: "🍔" }
+        ];
+
+        // 4. MAIN APP CONTROLLER CLASS
+        class XOApp {
+            constructor() {
+                this.lang = 'th';
+                this.currentPage = 'home';
+                this.isOnline = navigator.onLine;
+
+                // Game State
+                this.gameMode = '2p'; // '2p', 'ai', 'aiai'
+                this.aiDifficulty = 'med'; // 'easy', 'med', 'hard'
+                this.board = Array(9).fill(null);
+                this.currentPlayer = 1;
+                this.gameActive = false;
+                this.aiSpeed = 1000;
+                this.aiLoopTimer = null;
+                this.isAiPaused = false;
+
+                // Marks & User Profile
+                this.player1Mark = "😂";
+                this.player2Mark = "🤣";
+                this.activeEmojiTarget = 1; // 1 for Player 1, 2 for Player 2
+                this.user = {
+                    uid: 'guest_' + Math.random().toString(36).substring(2, 9),
+                    displayName: 'Guest Player',
+                    email: '',
+                    photoURL: '',
+                    isAnonymous: true
+                };
+
+                // Stats
+                this.stats = {
+                    totalGames: 0,
+                    wins: 0,
+                    losses: 0,
+                    draws: 0,
+                    streak: 0,
+                    bestStreak: 0
+                };
+
+                // History
+                this.history = [];
+
+                // Settings
+                this.glassSettings = {
+                    alpha: 0.35,
+                    blur: 16,
+                    radius: 24,
+                    borderAlpha: 0.25,
+                    shadowY: 12,
+                    sat: 140,
+                    bright: 105,
+                    theme: 'dark'
+                };
+
+                // Firebase Dynamic App Context
+                this.appId = typeof __app_id !== 'undefined' ? __app_id : 'xo-play-10beta';
+                this.db = null;
+                this.auth = null;
+
+                // Stored Custom Config
+                this.customFirebaseConfig = null;
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadLocalCache();
+                this.applyGlassSettings();
+                this.initCanvasBackground();
+                this.initFirebase();
+                this.navigateTo('home');
+                this.updateSyncBadge();
+            }
+
+            bindEvents() {
+                window.addEventListener('online', () => { this.isOnline = true; this.updateSyncBadge(); this.syncToCloud(); });
+                window.addEventListener('offline', () => { this.isOnline = false; this.updateSyncBadge(); });
+            }
+
+            t(key) {
+                return (i18n[this.lang] && i18n[this.lang][key]) || i18n['en'][key] || key;
+            }
+
+            setLanguage(langCode) {
+                this.lang = langCode;
+                document.getElementById('currentLangFlag').innerText = this.getLangFlag(langCode);
+                document.documentElement.setAttribute('dir', langCode === 'ar' ? 'rtl' : 'ltr');
+                this.render();
+                this.closeModal();
+                this.showToast(`เปลี่ยนภาษาเป็น ${langCode.toUpperCase()}`);
+            }
+
+            getLangFlag(lang) {
+                const flags = { th: '🇹🇭', en: '🇬🇧', la: '🇱🇦', vi: '🇻🇳', zh: '🇨🇳', ko: '🇰🇷', km: '🇰🇭', id: '🇮🇩', hi: '🇮🇳', ar: '🇸🇦', hmn: '🇭🇲' };
+                return flags[lang] || '🌐';
+            }
+
+            updateGlassSlider(prop, val) {
+                this.glassSettings[prop] = parseFloat(val);
+                this.applyGlassSettings();
+                this.saveLocalCache();
+            }
+
+            applyGlassSettings() {
+                const root = document.documentElement;
+                root.style.setProperty('--glass-alpha', this.glassSettings.alpha);
+                root.style.setProperty('--glass-blur', `${this.glassSettings.blur}px`);
+                root.style.setProperty('--glass-radius', `${this.glassSettings.radius}px`);
+                root.style.setProperty('--glass-border-alpha', this.glassSettings.borderAlpha);
+                root.style.setProperty('--glass-shadow-y', `${this.glassSettings.shadowY}px`);
+                root.style.setProperty('--glass-sat', `${this.glassSettings.sat}%`);
+                root.style.setProperty('--glass-bright', `${this.glassSettings.bright}%`);
+
+                if (this.glassSettings.theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else if (this.glassSettings.theme === 'light') {
+                    document.documentElement.classList.remove('dark');
+                } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                }
+            }
+
+            navigateTo(page) {
+                this.currentPage = page;
+                document.querySelectorAll('.nav-item').forEach(btn => {
+                    if (btn.dataset.page === page) {
+                        btn.classList.add('text-indigo-400');
+                        btn.classList.remove('text-gray-400');
+                    } else {
+                        btn.classList.remove('text-indigo-400');
+                        btn.classList.add('text-gray-400');
+                    }
+                });
+                this.render();
+            }
+
+            render() {
+                const main = document.getElementById('mainView');
+                audio.playClick();
+
+                switch (this.currentPage) {
+                    case 'home': main.innerHTML = this.renderHomeScreen(); break;
+                    case 'modes': main.innerHTML = this.renderModesScreen(); break;
+                    case 'aiSelect': main.innerHTML = this.renderAiSelectScreen(); break;
+                    case 'game': main.innerHTML = this.renderGameScreen(); break;
+                    case 'emoji': main.innerHTML = this.renderEmojiStudioScreen(); break;
+                    case 'stats': main.innerHTML = this.renderStatsScreen(); break;
+                    case 'profile': main.innerHTML = this.renderProfileScreen(); break;
+                }
+                this.updateI18nText();
+            }
+
+            updateI18nText() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    el.innerText = this.t(key);
+                });
+            }
+
+            renderHomeScreen() {
+                return `
+                <div class="flex flex-col gap-4 animate-fade-in my-auto">
+                    <div class="liquid-glass p-6 text-center flex flex-col items-center relative overflow-hidden">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-3xl shadow-lg mb-3 animate-bounce-short">
+                            <span>⚡</span>
+                        </div>
+                        <h2 class="text-xl font-black text-white tracking-wide">${this.t('appName')}</h2>
+                        <span class="text-xs text-indigo-300 font-mono">${this.t('appVersion')} • Liquid Glass Edition</span>
+                    </div>
+
+                    <button onclick="app.startGame('2p')" class="liquid-glass glass-btn p-4 flex items-center justify-between bg-gradient-to-r from-indigo-600/60 to-purple-600/60 border-indigo-400/40">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">🚀</div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-white text-base">${this.t('quickPlay')}</h3>
+                                <p class="text-xs text-indigo-200">2 Players Local Pass & Play</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-indigo-200"></i>
+                    </button>
+
+                    <button onclick="app.navigateTo('modes')" class="liquid-glass glass-btn p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-300 flex items-center justify-center text-xl">🎮</div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-white text-sm">${this.t('selectMode')}</h3>
+                                <p class="text-xs text-gray-400">VS AI, 2 Players, AI vs AI</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                    </button>
+
+                    <button onclick="app.navigateTo('emoji')" class="liquid-glass glass-btn p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-xl">🎨</div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-white text-sm">${this.t('customEmojiTitle')}</h3>
+                                <p class="text-xs text-gray-400">P1: ${this.player1Mark} vs P2: ${this.player2Mark}</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                    </button>
+
+                    <div class="liquid-glass p-4 grid grid-cols-3 text-center gap-2">
+                        <div>
+                            <span class="text-[10px] text-gray-400 uppercase block">${this.t('totalGames')}</span>
+                            <span class="text-lg font-extrabold text-indigo-300">${this.stats.totalGames}</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-gray-400 uppercase block">${this.t('wins')}</span>
+                            <span class="text-lg font-extrabold text-emerald-400">${this.stats.wins}</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-gray-400 uppercase block">${this.t('winRate')}</span>
+                            <span class="text-lg font-extrabold text-pink-400">${this.calculateWinRate()}%</span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
+            renderModesScreen() {
+                return `
+                <div class="flex flex-col gap-3 my-auto">
+                    <h2 class="text-lg font-bold text-center text-white mb-2">${this.t('selectMode')}</h2>
+
+                    <button onclick="app.startGame('2p')" class="liquid-glass glass-btn p-4 flex items-center gap-4 text-left">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-2xl shrink-0">👥</div>
+                        <div>
+                            <h3 class="font-bold text-white text-base">${this.t('mode2P')}</h3>
+                            <p class="text-xs text-gray-400">${this.t('mode2PDesc')}</p>
+                        </div>
+                    </button>
+
+                    <button onclick="app.navigateTo('aiSelect')" class="liquid-glass glass-btn p-4 flex items-center gap-4 text-left">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-2xl shrink-0">🤖</div>
+                        <div>
+                            <h3 class="font-bold text-white text-base">${this.t('modeAI')}</h3>
+                            <p class="text-xs text-gray-400">${this.t('modeAIDesc')}</p>
+                        </div>
+                    </button>
+
+                    <button onclick="app.startGame('aiai')" class="liquid-glass glass-btn p-4 flex items-center gap-4 text-left">
+                        <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-300 flex items-center justify-center text-2xl shrink-0">🤖🤖</div>
+                        <div>
+                            <h3 class="font-bold text-white text-base">${this.t('modeAIAI')}</h3>
+                            <p class="text-xs text-gray-400">${this.t('modeAIAIDesc')}</p>
+                        </div>
+                    </button>
+                </div>
+                `;
+            }
+
+            renderAiSelectScreen() {
+                return `
+                <div class="flex flex-col gap-3 my-auto">
+                    <h2 class="text-lg font-bold text-center text-white mb-2">เลือกระดับความยาก AI</h2>
+
+                    <button onclick="app.setAiAndStart('easy')" class="liquid-glass glass-btn p-4 flex items-center gap-3 text-left">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xl shrink-0">🌱</div>
+                        <div>
+                            <h3 class="font-bold text-emerald-300 text-sm">${this.t('aiEasy')}</h3>
+                            <p class="text-xs text-gray-400">${this.t('aiEasyDesc')}</p>
+                        </div>
+                    </button>
+
+                    <button onclick="app.setAiAndStart('med')" class="liquid-glass glass-btn p-4 flex items-center gap-3 text-left">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-xl shrink-0">⚔️</div>
+                        <div>
+                            <h3 class="font-bold text-amber-300 text-sm">${this.t('aiMed')}</h3>
+                            <p class="text-xs text-gray-400">${this.t('aiMedDesc')}</p>
+                        </div>
+                    </button>
+
+                    <button onclick="app.setAiAndStart('hard')" class="liquid-glass glass-btn p-4 flex items-center gap-3 text-left">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-300 flex items-center justify-center text-xl shrink-0">👑</div>
+                        <div>
+                            <h3 class="font-bold text-rose-300 text-sm">${this.t('aiHard')}</h3>
+                            <p class="text-xs text-gray-400">${this.t('aiHardDesc')}</p>
+                        </div>
+                    </button>
+                </div>
+                `;
+            }
+
+            setAiAndStart(diff) {
+                this.aiDifficulty = diff;
+                this.startGame('ai');
+            }
+
+            renderGameScreen() {
+                const markP1 = this.renderMarkContent(this.player1Mark);
+                const markP2 = this.renderMarkContent(this.player2Mark);
+
+                return `
+                <div class="flex flex-col justify-between h-full py-2">
+                    <div class="flex items-center justify-around liquid-glass p-3">
+                        <div class="flex items-center gap-2 p-2 rounded-xl transition-all ${this.currentPlayer === 1 ? 'bg-indigo-600/40 border border-indigo-400/50 scale-105' : 'opacity-60'}">
+                            <div class="text-xl">${markP1}</div>
+                            <span class="text-xs font-bold text-white">Player 1</span>
+                        </div>
+                        <span class="text-xs font-bold text-indigo-400">VS</span>
+                        <div class="flex items-center gap-2 p-2 rounded-xl transition-all ${this.currentPlayer === 2 ? 'bg-pink-600/40 border border-pink-400/50 scale-105' : 'opacity-60'}">
+                            <div class="text-xl">${markP2}</div>
+                            <span class="text-xs font-bold text-white">${this.gameMode === '2p' ? 'Player 2' : 'AI'}</span>
+                        </div>
+                    </div>
+
+                    <div class="my-auto relative p-3 liquid-glass">
+                        <div class="grid grid-cols-3 gap-3 w-full">
+                            ${this.board.map((cell, idx) => `
+                                <button onclick="app.handleCellClick(${idx})" class="xo-cell liquid-glass glass-btn bg-slate-900/40 text-4xl hover:border-indigo-400/50">
+                                    ${cell ? `<span class="xo-pop">${this.renderMarkContent(cell)}</span>` : ''}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-center gap-3">
+                        ${this.gameMode === 'aiai' ? `
+                            <button onclick="app.toggleAiPause()" class="liquid-glass glass-btn px-4 py-2 rounded-full text-xs font-bold text-indigo-300">
+                                ${this.isAiPaused ? '▶️ เล่นต่อ' : '⏸️ หยุด'}
+                            </button>
+                            <button onclick="app.changeAiSpeed()" class="liquid-glass glass-btn px-4 py-2 rounded-full text-xs font-bold text-pink-300">
+                                ⚡ ${this.aiSpeed}ms
+                            </button>
+                        ` : ''}
+                        <button onclick="app.restartGame()" class="liquid-glass glass-btn px-4 py-2 rounded-full text-xs font-bold text-white">
+                            🔄 เริ่มใหม่
+                        </button>
+                        <button onclick="app.navigateTo('modes')" class="liquid-glass glass-btn px-4 py-2 rounded-full text-xs font-bold text-gray-400">
+                            🚪 ออก
+                        </button>
+                    </div>
+                </div>
+                `;
+            }
+
+            renderMarkContent(mark) {
+                if (mark.startsWith('data:image') || mark.startsWith('http')) {
+                    return `<img src="${mark}" class="w-10 h-10 rounded-full object-cover shadow inline-block" />`;
+                }
+                return mark;
+            }
+
+            startGame(mode) {
+                this.gameMode = mode;
+                this.board = Array(9).fill(null);
+                this.currentPlayer = 1;
+                this.gameActive = true;
+                this.isAiPaused = false;
+                if (this.aiLoopTimer) clearInterval(this.aiLoopTimer);
+
+                this.navigateTo('game');
+
+                if (this.gameMode === 'aiai') {
+                    this.startAiVsAiLoop();
+                }
+            }
+
+            restartGame() {
+                this.startGame(this.gameMode);
+            }
+
+            handleCellClick(index) {
+                if (!this.gameActive || this.board[index] !== null || this.gameMode === 'aiai') return;
+                this.makeMove(index, this.currentPlayer === 1 ? this.player1Mark : this.player2Mark);
+            }
+
+            makeMove(index, mark) {
+                this.board[index] = mark;
+                audio.playMove(this.currentPlayer);
+                this.render();
+
+                const winnerPattern = this.checkWin();
+                if (winnerPattern) {
+                    this.gameActive = false;
+                    this.handleWin(this.currentPlayer);
+                    return;
+                }
+
+                if (this.board.every(cell => cell !== null)) {
+                    this.gameActive = false;
+                    this.handleDraw();
+                    return;
+                }
+
+                this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
+
+                if (this.gameActive && this.gameMode === 'ai' && this.currentPlayer === 2) {
+                    setTimeout(() => this.triggerAiMove(), 400);
+                }
+            }
+
+            triggerAiMove() {
+                if (!this.gameActive) return;
+                let bestIndex;
+                if (this.aiDifficulty === 'easy') {
+                    bestIndex = this.getRandomEmptyCell();
+                } else if (this.aiDifficulty === 'med') {
+                    bestIndex = this.getMediumAiMove();
+                } else {
+                    bestIndex = this.getMinimaxHardMove();
+                }
+
+                if (bestIndex !== undefined && bestIndex !== null) {
+                    this.makeMove(bestIndex, this.player2Mark);
+                }
+            }
+
+            getRandomEmptyCell() {
+                const empties = this.board.map((v, i) => v === null ? i : null).filter(v => v !== null);
+                return empties[Math.floor(Math.random() * empties.length)];
+            }
+
+            getMediumAiMove() {
+                for (let i = 0; i < 9; i++) {
+                    if (this.board[i] === null) {
+                        this.board[i] = this.player2Mark;
+                        if (this.checkWin()) { this.board[i] = null; return i; }
+                        this.board[i] = null;
+                    }
+                }
+                for (let i = 0; i < 9; i++) {
+                    if (this.board[i] === null) {
+                        this.board[i] = this.player1Mark;
+                        if (this.checkWin()) { this.board[i] = null; return i; }
+                        this.board[i] = null;
+                    }
+                }
+                return this.getRandomEmptyCell();
+            }
+
+            getMinimaxHardMove() {
+                let bestScore = -Infinity;
+                let move;
+                for (let i = 0; i < 9; i++) {
+                    if (this.board[i] === null) {
+                        this.board[i] = this.player2Mark;
+                        let score = this.minimax(this.board, 0, false);
+                        this.board[i] = null;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            move = i;
+                        }
+                    }
+                }
+                return move !== undefined ? move : this.getRandomEmptyCell();
+            }
+
+            minimax(board, depth, isMaximizing) {
+                const win = this.checkWin();
+                if (win) return isMaximizing ? -10 + depth : 10 - depth;
+                if (board.every(cell => cell !== null)) return 0;
+
+                if (isMaximizing) {
+                    let bestScore = -Infinity;
+                    for (let i = 0; i < 9; i++) {
+                        if (board[i] === null) {
+                            board[i] = this.player2Mark;
+                            let score = this.minimax(board, depth + 1, false);
+                            board[i] = null;
+                            bestScore = Math.max(score, bestScore);
+                        }
+                    }
+                    return bestScore;
+                } else {
+                    let bestScore = Infinity;
+                    for (let i = 0; i < 9; i++) {
+                        if (board[i] === null) {
+                            board[i] = this.player1Mark;
+                            let score = this.minimax(board, depth + 1, true);
+                            board[i] = null;
+                            bestScore = Math.min(score, bestScore);
+                        }
+                    }
+                    return bestScore;
+                }
+            }
+
+            startAiVsAiLoop() {
+                this.aiLoopTimer = setInterval(() => {
+                    if (!this.gameActive || this.isAiPaused) return;
+
+                    if (this.currentPlayer === 1) {
+                        const move = this.getRandomEmptyCell();
+                        if (move !== undefined) this.makeMove(move, this.player1Mark);
+                    } else {
+                        const move = this.getMediumAiMove();
+                        if (move !== undefined) this.makeMove(move, this.player2Mark);
+                    }
+                }, this.aiSpeed);
+            }
+
+            toggleAiPause() {
+                this.isAiPaused = !this.isAiPaused;
+                this.render();
+            }
+
+            changeAiSpeed() {
+                const speeds = [500, 1000, 1500, 2000];
+                const nextIdx = (speeds.indexOf(this.aiSpeed) + 1) % speeds.length;
+                this.aiSpeed = speeds[nextIdx];
+                if (this.gameMode === 'aiai') this.startAiVsAiLoop();
+                this.render();
+            }
+
+            checkWin() {
+                const lines = [
+                    [0,1,2], [3,4,5], [6,7,8],
+                    [0,3,6], [1,4,7], [2,5,8],
+                    [0,4,8], [2,4,6]
+                ];
+                for (let line of lines) {
+                    const [a, b, c] = line;
+                    if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
+                        return line;
+                    }
+                }
+                return null;
+            }
+
+            handleWin(player) {
+                if (player === 1 || (this.gameMode === '2p' && player === 2)) {
+                    audio.playWin();
+                    this.fireConfetti();
+                } else {
+                    audio.playLose();
+                }
+
+                this.stats.totalGames++;
+                if (player === 1) {
+                    this.stats.wins++;
+                    this.stats.streak++;
+                    if (this.stats.streak > this.stats.bestStreak) this.stats.bestStreak = this.stats.streak;
+                } else {
+                    this.stats.losses++;
+                    this.stats.streak = 0;
+                }
+
+                this.addHistoryRecord(player === 1 ? 'WIN' : 'LOSS', player);
+                this.saveLocalCache();
+                this.syncToCloud();
+
+                const winnerMark = player === 1 ? this.player1Mark : this.player2Mark;
+                this.openModalDirect(`
+                    <div class="text-center py-4">
+                        <div class="text-5xl mb-3 animate-bounce">${this.renderMarkContent(winnerMark)}</div>
+                        <h3 class="text-2xl font-black text-emerald-400 mb-1">${this.t('winMsg')}</h3>
+                        <p class="text-xs text-gray-300 mb-5">ผู้เล่น ${player} คว้าชัยชนะในเกมนี้!</p>
+                        <div class="flex gap-2 justify-center">
+                            <button onclick="app.closeModal(); app.restartGame();" class="liquid-glass glass-btn px-5 py-2.5 rounded-full text-xs font-bold text-white bg-indigo-600/50">
+                                ${this.t('playAgain')}
+                            </button>
+                            <button onclick="app.closeModal(); app.navigateTo('home');" class="liquid-glass glass-btn px-5 py-2.5 rounded-full text-xs font-bold text-gray-300">
+                                ${this.t('backHome')}
+                            </button>
+                        </div>
+                    </div>
+                `);
+            }
+
+            handleDraw() {
+                audio.playDraw();
+                this.stats.totalGames++;
+                this.stats.draws++;
+                this.stats.streak = 0;
+
+                this.addHistoryRecord('DRAW', 0);
+                this.saveLocalCache();
+                this.syncToCloud();
+
+                this.openModalDirect(`
+                    <div class="text-center py-4">
+                        <div class="text-5xl mb-3">🤝</div>
+                        <h3 class="text-2xl font-black text-amber-400 mb-1">${this.t('drawMsg')}</h3>
+                        <p class="text-xs text-gray-300 mb-5">ไม่มีผู้ชนะในตานี้!</p>
+                        <div class="flex gap-2 justify-center">
+                            <button onclick="app.closeModal(); app.restartGame();" class="liquid-glass glass-btn px-5 py-2.5 rounded-full text-xs font-bold text-white bg-indigo-600/50">
+                                ${this.t('playAgain')}
+                            </button>
+                            <button onclick="app.closeModal(); app.navigateTo('home');" class="liquid-glass glass-btn px-5 py-2.5 rounded-full text-xs font-bold text-gray-300">
+                                ${this.t('backHome')}
+                            </button>
+                        </div>
+                    </div>
+                `);
+            }
+
+            addHistoryRecord(result, winner) {
+                this.history.unshift({
+                    id: Date.now(),
+                    date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    mode: this.gameMode.toUpperCase(),
+                    result: result,
+                    winner: winner
+                });
+                if (this.history.length > 20) this.history.pop();
+            }
+
+            calculateWinRate() {
+                if (this.stats.totalGames === 0) return 0;
+                return Math.round((this.stats.wins / this.stats.totalGames) * 100);
+            }
+
+            renderEmojiStudioScreen() {
+                return `
+                <div class="flex flex-col gap-4">
+                    <h2 class="text-base font-bold text-center text-white">${this.t('customEmojiTitle')}</h2>
+
+                    <!-- Target Selection Cards (P1 vs P2) -->
+                    <div class="liquid-glass p-4 flex items-center justify-around text-center">
+                        <button onclick="app.setActiveEmojiTarget(1)" class="flex flex-col items-center p-2 rounded-2xl transition-all cursor-pointer ${this.activeEmojiTarget === 1 ? 'ring-2 ring-indigo-400 bg-indigo-500/30 scale-105 shadow-lg' : 'opacity-70 hover:opacity-100'}">
+                            <span class="text-[10px] font-bold block mb-1 ${this.activeEmojiTarget === 1 ? 'text-indigo-300' : 'text-gray-400'}">P1 (X) Mark ${this.activeEmojiTarget === 1 ? '✏️' : ''}</span>
+                            <div class="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-3xl border border-indigo-400/40">
+                                ${this.renderMarkContent(this.player1Mark)}
+                            </div>
+                        </button>
+                        <span class="text-xl font-bold text-indigo-400">VS</span>
+                        <button onclick="app.setActiveEmojiTarget(2)" class="flex flex-col items-center p-2 rounded-2xl transition-all cursor-pointer ${this.activeEmojiTarget === 2 ? 'ring-2 ring-pink-400 bg-pink-500/30 scale-105 shadow-lg' : 'opacity-70 hover:opacity-100'}">
+                            <span class="text-[10px] font-bold block mb-1 ${this.activeEmojiTarget === 2 ? 'text-pink-300' : 'text-gray-400'}">P2 (O) Mark ${this.activeEmojiTarget === 2 ? '✏️' : ''}</span>
+                            <div class="w-14 h-14 rounded-2xl bg-pink-500/20 flex items-center justify-center text-3xl border border-pink-400/40">
+                                ${this.renderMarkContent(this.player2Mark)}
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Active Target Status Indicator -->
+                    <div class="text-center">
+                        <span class="text-xs font-semibold ${this.activeEmojiTarget === 1 ? 'text-indigo-300 bg-indigo-500/20 border-indigo-500/30' : 'text-pink-300 bg-pink-500/20 border-pink-500/30'} px-3 py-1 rounded-full border">
+                            🎯 กำลังเลือกให้: Player ${this.activeEmojiTarget} (${this.activeEmojiTarget === 1 ? 'X' : 'O'})
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs font-semibold text-gray-300 block mb-2">ชุด Preset สำเร็จรูป</span>
+                        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                            ${PRESET_EMOJI_SETS.map(set => `
+                                <button onclick="app.setPresetMarks('${set.p1}', '${set.p2}')" class="liquid-glass glass-btn px-3 py-2 text-xs flex items-center gap-2 whitespace-nowrap">
+                                    <span>${set.p1} v ${set.p2}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="liquid-glass p-3 flex items-center justify-between">
+                        <span class="text-xs text-gray-200">อัปโหลดรูป Custom (Player ${this.activeEmojiTarget})</span>
+                        <label class="liquid-glass glass-btn px-3 py-1.5 rounded-full text-xs font-bold text-indigo-300 cursor-pointer">
+                            📁 เลือกรูป
+                            <input type="file" accept="image/*" onchange="app.handleImageUpload(event)" class="hidden" />
+                        </label>
+                    </div>
+
+                    <div class="liquid-glass p-3">
+                        <input type="text" id="emojiSearchInput" oninput="app.filterEmojis(this.value)" placeholder="${this.t('searchEmoji')}" class="w-full bg-slate-900/60 text-xs px-3 py-2 rounded-xl border border-white/10 mb-3 text-white focus:outline-none focus:border-indigo-400" />
+
+                        <div id="emojiGrid" class="grid grid-cols-7 gap-2 max-h-48 overflow-y-auto no-scrollbar">
+                            ${Object.values(EMOJI_DATABASE).flat().map(emoji => `
+                                <button onclick="app.selectEmojiMark('${emoji}')" class="text-2xl p-1.5 rounded-xl hover:bg-white/10 transition">
+                                    ${emoji}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
+            setActiveEmojiTarget(target) {
+                this.activeEmojiTarget = target;
+                audio.playClick();
+                this.render();
+            }
+
+            setPresetMarks(p1, p2) {
+                this.player1Mark = p1;
+                this.player2Mark = p2;
+                audio.playClick();
+                this.render();
+                this.saveLocalCache();
+                this.showToast("ปรับเปลี่ยนชุด Emoji ทั้งสองฝั่งสำเร็จ!");
+            }
+
+            selectEmojiMark(emoji) {
+                if (this.activeEmojiTarget === 1) {
+                    this.player1Mark = emoji;
+                } else {
+                    this.player2Mark = emoji;
+                }
+                audio.playClick();
+                this.render();
+                this.saveLocalCache();
+                this.showToast(`เลือก ${emoji} ให้กับ Player ${this.activeEmojiTarget}`);
+            }
+
+            handleImageUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 120;
+                        canvas.height = 120;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, 120, 120);
+                        const croppedDataUrl = canvas.toDataURL('image/png');
+
+                        if (this.activeEmojiTarget === 1) {
+                            this.player1Mark = croppedDataUrl;
+                        } else {
+                            this.player2Mark = croppedDataUrl;
+                        }
+                        this.render();
+                        this.saveLocalCache();
+                        this.showToast(`อัปโหลดรูปภาพสำเร็จสำหรับ Player ${this.activeEmojiTarget}!`);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            filterEmojis(query) {
+                const grid = document.getElementById('emojiGrid');
+                if (!query) {
+                    grid.innerHTML = Object.values(EMOJI_DATABASE).flat().map(emoji => `
+                        <button onclick="app.selectEmojiMark('${emoji}')" class="text-2xl p-1.5 rounded-xl hover:bg-white/10 transition">
+                            ${emoji}
+                        </button>
+                    `).join('');
+                    return;
+                }
+                const filtered = Object.values(EMOJI_DATABASE).flat().filter(e => e.includes(query));
+                grid.innerHTML = filtered.map(emoji => `
+                    <button onclick="app.selectEmojiMark('${emoji}')" class="text-2xl p-1.5 rounded-xl hover:bg-white/10 transition">
+                        ${emoji}
+                    </button>
+                `).join('');
+            }
+
+            renderStatsScreen() {
+                return `
+                <div class="flex flex-col gap-4">
+                    <h2 class="text-base font-bold text-center text-white">${this.t('navStats')}</h2>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="liquid-glass p-3 text-center">
+                            <span class="text-[10px] text-gray-400 block uppercase">${this.t('totalGames')}</span>
+                            <span class="text-2xl font-extrabold text-indigo-300">${this.stats.totalGames}</span>
+                        </div>
+                        <div class="liquid-glass p-3 text-center">
+                            <span class="text-[10px] text-gray-400 block uppercase">${this.t('winRate')}</span>
+                            <span class="text-2xl font-extrabold text-pink-400">${this.calculateWinRate()}%</span>
+                        </div>
+                        <div class="liquid-glass p-3 text-center">
+                            <span class="text-[10px] text-gray-400 block uppercase">${this.t('wins')}</span>
+                            <span class="text-xl font-bold text-emerald-400">${this.stats.wins}</span>
+                        </div>
+                        <div class="liquid-glass p-3 text-center">
+                            <span class="text-[10px] text-gray-400 block uppercase">${this.t('losses')}</span>
+                            <span class="text-xl font-bold text-rose-400">${this.stats.losses}</span>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xs font-bold text-gray-300 mt-2">ประวัติการเล่นล่าสุด</h3>
+                    <div class="liquid-glass p-3 max-h-56 overflow-y-auto no-scrollbar flex flex-col gap-2">
+                        ${this.history.length === 0 ? `
+                            <p class="text-xs text-center text-gray-400 py-4">ยังไม่มีประวัติการเล่น</p>
+                        ` : this.history.map(item => `
+                            <div class="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-900/40">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold ${item.result === 'WIN' ? 'text-emerald-400' : item.result === 'LOSS' ? 'text-rose-400' : 'text-amber-400'}">${item.result}</span>
+                                    <span class="text-[10px] text-gray-400 font-mono">${item.mode}</span>
+                                </div>
+                                <span class="text-[10px] text-gray-400">${item.date}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                `;
+            }
+
+            renderProfileScreen() {
+                return `
+                <div class="flex flex-col gap-4 text-center my-auto">
+                    <div class="liquid-glass p-6 flex flex-col items-center">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-4xl shadow-xl mb-3 overflow-hidden">
+                            ${this.user.photoURL ? `<img src="${this.user.photoURL}" class="w-full h-full object-cover" />` : '👤'}
+                        </div>
+                        <h3 class="font-bold text-lg text-white">${this.user.displayName || 'Guest Player'}</h3>
+                        <p class="text-xs text-indigo-300 font-mono mb-1">${this.user.email || 'Guest Account'}</p>
+                        ${this.user.uid ? `<p class="text-[9px] text-gray-400 font-mono mb-4">UID: ${this.user.uid}</p>` : ''}
+
+                        ${this.user.isAnonymous ? `
+                            <button onclick="app.loginWithGoogle()" class="liquid-glass glass-btn px-5 py-3 rounded-full text-xs font-bold text-white bg-indigo-600/70 flex items-center justify-center gap-2.5 w-full shadow-lg hover:bg-indigo-600">
+                                <i class="fa-brands fa-google text-red-400 text-sm"></i> ${this.t('googleLogin')}
+                            </button>
+                        ` : `
+                            <button onclick="app.logoutUser()" class="liquid-glass glass-btn px-4 py-2 rounded-full text-xs font-bold text-rose-300 border-rose-500/30">
+                                ${this.t('logout')}
+                            </button>
+                        `}
+                    </div>
+
+                    <div class="liquid-glass p-3 flex items-center justify-between text-xs">
+                        <span class="text-gray-300">Cloud Storage Sync</span>
+                        <span id="cloudStatusBadge" class="font-bold ${this.isOnline ? 'text-emerald-400' : 'text-amber-400'}">${this.isOnline ? 'Online' : 'Offline'}</span>
+                    </div>
+
+                    <button onclick="app.openModal('firebaseModal')" class="liquid-glass glass-btn p-3 text-xs text-indigo-300 font-bold flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-fire text-amber-400"></i> ${this.t('firebaseConfigTitle')}
+                    </button>
+                </div>
+                `;
+            }
+
+            openModal(modalType) {
+                audio.playClick();
+                const container = document.getElementById('modalContent');
+
+                if (modalType === 'langModal') {
+                    container.innerHTML = `
+                        <h3 class="text-sm font-bold text-white mb-3 text-center">เลือกภาษา / Select Language</h3>
+                        <div class="grid grid-cols-1 gap-2 text-xs">
+                            <button onclick="app.setLanguage('th')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇹🇭 ไทย (Thai)</span></button>
+                            <button onclick="app.setLanguage('en')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇬🇧 English</span></button>
+                            <button onclick="app.setLanguage('la')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇱🇦 ພາສາລາວ (Lao)</span></button>
+                            <button onclick="app.setLanguage('vi')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇻🇳 Tiếng Việt</span></button>
+                            <button onclick="app.setLanguage('zh')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇨🇳 中文 (Chinese)</span></button>
+                            <button onclick="app.setLanguage('ko')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇰🇷 한국어 (Korean)</span></button>
+                            <button onclick="app.setLanguage('km')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇰🇭 ភាសាខ្មែរ (Khmer)</span></button>
+                            <button onclick="app.setLanguage('id')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇮🇩 Bahasa Indonesia</span></button>
+                            <button onclick="app.setLanguage('hi')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇮🇳 हिन्दी (Hindi)</span></button>
+                            <button onclick="app.setLanguage('ar')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇸🇦 العربية (Arabic)</span></button>
+                            <button onclick="app.setLanguage('hmn')" class="liquid-glass glass-btn p-2.5 flex items-center justify-between"><span>🇭🇲 Hmoob (Hmong)</span></button>
+                        </div>
+                    `;
+                } else if (modalType === 'settingsModal') {
+                    container.innerHTML = `
+                        <h3 class="text-sm font-bold text-white mb-4 text-center">${this.t('settingsTitle')}</h3>
+                        <div class="flex flex-col gap-3 text-xs">
+                            <div>
+                                <label class="text-gray-300 block mb-1">${this.t('transparency')}</label>
+                                <input type="range" min="0.1" max="0.8" step="0.05" value="${this.glassSettings.alpha}" oninput="app.updateGlassSlider('alpha', this.value)" class="w-full accent-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="text-gray-300 block mb-1">${this.t('blur')}</label>
+                                <input type="range" min="4" max="30" step="1" value="${this.glassSettings.blur}" oninput="app.updateGlassSlider('blur', this.value)" class="w-full accent-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="text-gray-300 block mb-1">${this.t('radius')}</label>
+                                <input type="range" min="8" max="36" step="2" value="${this.glassSettings.radius}" oninput="app.updateGlassSlider('radius', this.value)" class="w-full accent-indigo-500" />
+                            </div>
+                            <div>
+                                <label class="text-gray-300 block mb-1">Theme Mode</label>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <button onclick="app.setTheme('dark')" class="liquid-glass glass-btn p-2 rounded-xl">Dark</button>
+                                    <button onclick="app.setTheme('light')" class="liquid-glass glass-btn p-2 rounded-xl">Light</button>
+                                    <button onclick="app.setTheme('system')" class="liquid-glass glass-btn p-2 rounded-xl">System</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (modalType === 'firebaseModal') {
+                    const cfg = this.customFirebaseConfig || {};
+                    container.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-sm font-bold text-white">${this.t('firebaseConfigTitle')}</h3>
+                            <button onclick="app.closeModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <p class="text-[11px] text-gray-300 mb-3">${this.t('configNotice')}</p>
+                        
+                        <div class="flex flex-col gap-2 text-xs mb-3">
+                            <div>
+                                <label class="text-[10px] text-gray-400">API Key</label>
+                                <input type="text" id="fbApiKey" value="${cfg.apiKey || ''}" placeholder="AIzaSy..." class="w-full bg-slate-900/60 p-2 rounded-xl border border-white/10 text-white font-mono text-[11px]" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Auth Domain</label>
+                                <input type="text" id="fbAuthDomain" value="${cfg.authDomain || ''}" placeholder="your-app.firebaseapp.com" class="w-full bg-slate-900/60 p-2 rounded-xl border border-white/10 text-white font-mono text-[11px]" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Project ID</label>
+                                <input type="text" id="fbProjectId" value="${cfg.projectId || ''}" placeholder="your-app-id" class="w-full bg-slate-900/60 p-2 rounded-xl border border-white/10 text-white font-mono text-[11px]" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Storage Bucket</label>
+                                <input type="text" id="fbStorageBucket" value="${cfg.storageBucket || ''}" placeholder="your-app-id.appspot.com" class="w-full bg-slate-900/60 p-2 rounded-xl border border-white/10 text-white font-mono text-[11px]" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">App ID</label>
+                                <input type="text" id="fbAppId" value="${cfg.appId || ''}" placeholder="1:123456789:web:abcdef" class="w-full bg-slate-900/60 p-2 rounded-xl border border-white/10 text-white font-mono text-[11px]" />
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="app.saveFirebaseKeys()" class="flex-1 liquid-glass glass-btn p-2.5 rounded-xl font-bold text-white bg-indigo-600/70 text-xs text-center">
+                                บันทึก & เชื่อมต่อ
+                            </button>
+                            <button onclick="app.showFirebaseSetupGuide()" class="liquid-glass glass-btn p-2.5 rounded-xl font-bold text-amber-300 text-xs">
+                                📖 คู่มือตั้งค่า
+                            </button>
+                        </div>
+                    `;
+                }
+
+                const overlay = document.getElementById('modalOverlay');
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                    container.classList.remove('scale-90');
+                }, 10);
+            }
+
+            openModalDirect(htmlContent) {
+                const container = document.getElementById('modalContent');
+                container.innerHTML = htmlContent;
+                const overlay = document.getElementById('modalOverlay');
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                    container.classList.remove('scale-90');
+                }, 10);
+            }
+
+            closeModal() {
+                const overlay = document.getElementById('modalOverlay');
+                const container = document.getElementById('modalContent');
+                overlay.classList.add('opacity-0');
+                container.classList.add('scale-90');
+                setTimeout(() => { overlay.classList.add('hidden'); }, 300);
+            }
+
+            showFirebaseSetupGuide() {
+                this.openModalDirect(`
+                    <div class="text-left text-xs text-gray-200">
+                        <h3 class="text-sm font-bold text-amber-300 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-fire"></i> วิธีเปิดใช้งาน Google Login บน Firebase
+                        </h3>
+                        <ol class="list-decimal pl-4 space-y-1.5 text-[11px] text-gray-300">
+                            <li>เข้าไปที่ <a href="https://console.firebase.google.com" target="_blank" class="text-indigo-300 underline">Firebase Console</a> แล้วสร้าง Project ใหม่</li>
+                            <li>ไปที่ <b>Authentication</b> &rarr; <b>Sign-in method</b> &rarr; เปิดใช้งาน <b>Google</b></li>
+                            <li>ไปที่ <b>Firestore Database</b> &rarr; สร้าง Database ใน Test Mode</li>
+                            <li>ไปที่ <b>Project Settings</b> &rarr; <b>General</b> &rarr; กดเพิ่ม Web App (<code>&lt;/&gt;</code>)</li>
+                            <li>คัดลอกค่า <code>firebaseConfig</code> มาวางในหน้าตั้งค่า แล้วกด <b>บันทึก & เชื่อมต่อ</b></li>
+                        </ol>
+                        <button onclick="app.openModal('firebaseModal')" class="w-full mt-4 liquid-glass glass-btn p-2 rounded-xl text-center font-bold text-white bg-indigo-600/60">
+                            ตกลง
+                        </button>
+                    </div>
+                `);
+            }
+
+            setTheme(mode) {
+                this.glassSettings.theme = mode;
+                this.applyGlassSettings();
+                this.saveLocalCache();
+                this.closeModal();
+            }
+
+            showToast(msg) {
+                const toast = document.getElementById('toast');
+                document.getElementById('toastMsg').innerText = msg;
+                toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+                }, 2500);
+            }
+
+            updateSyncBadge() {
+                const text = document.getElementById('syncText');
+                const dot = document.getElementById('syncDot');
+                if (this.isOnline) {
+                    text.innerText = this.t('synced');
+                    dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
+                } else {
+                    text.innerText = this.t('offline');
+                    dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+                }
+            }
+
+            saveLocalCache() {
+                const data = {
+                    stats: this.stats,
+                    history: this.history,
+                    player1Mark: this.player1Mark,
+                    player2Mark: this.player2Mark,
+                    glassSettings: this.glassSettings,
+                    lang: this.lang,
+                    customFirebaseConfig: this.customFirebaseConfig
+                };
+                localStorage.setItem('xo_game_cache', JSON.stringify(data));
+            }
+
+            loadLocalCache() {
+                const cached = localStorage.getItem('xo_game_cache');
+                if (cached) {
+                    try {
+                        const parsed = JSON.parse(cached);
+                        this.stats = parsed.stats || this.stats;
+                        this.history = parsed.history || [];
+                        this.player1Mark = parsed.player1Mark || "😂";
+                        this.player2Mark = parsed.player2Mark || "🤣";
+                        this.glassSettings = parsed.glassSettings || this.glassSettings;
+                        this.lang = parsed.lang || 'th';
+                        this.customFirebaseConfig = parsed.customFirebaseConfig || null;
+                    } catch (e) { console.error(e); }
+                }
+            }
+
+            // REAL FIREBASE AUTH & FIRESTORE INTEGRATION
+            initFirebase() {
+                if (typeof window.FB === 'undefined') return;
+                const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, onAuthStateChanged } = window.FB;
+
+                try {
+                    // Use your exact Firebase production config provided
+                    let firebaseConfig = this.customFirebaseConfig;
+                    if (!firebaseConfig) {
+                        firebaseConfig = {
+                            apiKey: "AIzaSyCCHK53eoVNxXJOdF1WxPOuZsyXONg1LM8",
+                            authDomain: "private-cake-shop-game.firebaseapp.com",
+                            projectId: "private-cake-shop-game",
+                            storageBucket: "private-cake-shop-game.firebasestorage.app",
+                            messagingSenderId: "1040198482849",
+                            appId: "1:1040198482849:web:f7e8325f02030dd2bea9e0",
+                            measurementId: "G-GRZ893CEM7"
+                        };
+                        this.customFirebaseConfig = firebaseConfig;
+                    }
+
+                    const fbApp = initializeApp(firebaseConfig);
+                    this.auth = getAuth(fbApp);
+                    this.db = getFirestore(fbApp);
+
+                    const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (authToken && this.auth) {
+                        signInWithCustomToken(this.auth, authToken).catch(() => signInAnonymously(this.auth));
+                    } else if (this.auth && !this.auth.currentUser) {
+                        signInAnonymously(this.auth).catch(err => console.warn(err));
+                    }
+
+                    onAuthStateChanged(this.auth, (u) => {
+                        if (u) {
+                            this.user = u;
+                            document.getElementById('navUserName').innerText = u.displayName || (u.isAnonymous ? 'Guest' : u.email.split('@')[0]);
+                            const avatarHeader = document.getElementById('userAvatarHeader');
+                            if (u.photoURL) {
+                                avatarHeader.innerHTML = `<img src="${u.photoURL}" class="w-full h-full object-cover" />`;
+                            } else {
+                                avatarHeader.innerHTML = `<span>👤</span>`;
+                            }
+                            this.syncToCloud();
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Firebase Setup Info:", e);
+                }
+            }
+
+            saveFirebaseKeys() {
+                const apiKey = document.getElementById('fbApiKey').value.trim();
+                const authDomain = document.getElementById('fbAuthDomain').value.trim();
+                const projectId = document.getElementById('fbProjectId').value.trim();
+                const storageBucket = document.getElementById('fbStorageBucket').value.trim();
+                const appId = document.getElementById('fbAppId').value.trim();
+
+                if (!apiKey || !projectId) {
+                    this.showToast("กรุณากรอก API Key และ Project ID");
+                    return;
+                }
+
+                this.customFirebaseConfig = { apiKey, authDomain, projectId, storageBucket, appId };
+                this.saveLocalCache();
+                this.closeModal();
+                this.showToast("บันทึก Firebase Config แล้ว! กำลังเชื่อมต่อ...");
+                setTimeout(() => location.reload(), 1000);
+            }
+
+            loginWithGoogle() {
+                if (!this.auth || !window.FB) {
+                    this.openModal('firebaseModal');
+                    return;
+                }
+                const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = window.FB;
+                const provider = new GoogleAuthProvider();
+
+                // Mobile detection for optimized auth flow
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                if (isMobile) {
+                    signInWithRedirect(this.auth, provider).catch(err => {
+                        console.error(err);
+                        this.showToast("Google Sign-In Error: " + err.message);
+                    });
+                } else {
+                    signInWithPopup(this.auth, provider)
+                        .then(res => {
+                            this.user = res.user;
+                            this.showToast(`เข้าสู่ระบบสำเร็จ: ${this.user.displayName}`);
+                            this.render();
+                            this.syncToCloud();
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            this.showToast("Google Login Error: " + err.message);
+                        });
+                }
+            }
+
+            logoutUser() {
+                if (this.auth && window.FB) {
+                    window.FB.signOut(this.auth).then(() => {
+                        this.user = { uid: 'guest_' + Math.random().toString(36).substring(2, 9), displayName: 'Guest Player', isAnonymous: true };
+                        this.showToast("ออกจากระบบแล้ว");
+                        this.render();
+                    });
+                }
+            }
+
+            syncToCloud() {
+                if (!this.db || !this.user || !this.isOnline || typeof window.FB === 'undefined') return;
+                const { doc, setDoc } = window.FB;
+
+                const userDocRef = doc(this.db, 'artifacts', this.appId, 'users', this.user.uid, 'profile', 'main');
+                setDoc(userDocRef, {
+                    displayName: this.user.displayName || 'Guest Player',
+                    email: this.user.email || '',
+                    photoURL: this.user.photoURL || '',
+                    stats: this.stats,
+                    glassSettings: this.glassSettings,
+                    player1Mark: this.player1Mark,
+                    player2Mark: this.player2Mark,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).catch(err => console.warn(err));
+            }
+
+            initCanvasBackground() {
+                const canvas = document.getElementById('bgCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                let width = canvas.width = canvas.parentElement.clientWidth;
+                let height = canvas.height = canvas.parentElement.clientHeight;
+
+                window.addEventListener('resize', () => {
+                    width = canvas.width = canvas.parentElement.clientWidth;
+                    height = canvas.height = canvas.parentElement.clientHeight;
+                });
+
+                const particles = Array.from({ length: 25 }, () => ({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 3 + 1,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    alpha: Math.random() * 0.5 + 0.2
+                }));
+
+                function loop() {
+                    ctx.clearRect(0, 0, width, height);
+                    particles.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        if (p.x < 0) p.x = width;
+                        if (p.x > width) p.x = 0;
+                        if (p.y < 0) p.y = height;
+                        if (p.y > height) p.y = 0;
+
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(129, 140, 248, ${p.alpha})`;
+                        ctx.fill();
+                    });
+                    requestAnimationFrame(loop);
+                }
+                loop();
+            }
+
+            fireConfetti() {
+                const canvas = document.getElementById('confettiCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width = canvas.parentElement.clientWidth;
+                const height = canvas.height = canvas.parentElement.clientHeight;
+
+                const pieces = Array.from({ length: 60 }, () => ({
+                    x: width / 2,
+                    y: height / 2,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.7) * 14,
+                    size: Math.random() * 8 + 4,
+                    color: ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'][Math.floor(Math.random() * 5)],
+                    rotation: Math.random() * 360
+                }));
+
+                let frames = 0;
+                function animate() {
+                    ctx.clearRect(0, 0, width, height);
+                    pieces.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.3;
+                        p.rotation += 4;
+
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate((p.rotation * Math.PI) / 180);
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                        ctx.restore();
+                    });
+
+                    frames++;
+                    if (frames < 90) requestAnimationFrame(animate);
+                    else ctx.clearRect(0, 0, width, height);
+                }
+                animate();
+            }
+        }
+
+        let app;
+        window.addEventListener('load', () => {
+            app = new XOApp();
+            app.init();
+        });
+    </script>
+</body>
+</html>
